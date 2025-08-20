@@ -7,7 +7,7 @@ from app.models.user import UserType
 
 from app.services.cart_service import CartService, CartError, CartResult
 from app.services.order_service import OrderError, OrderService, OrderResult, OrderItemResult
-from app.services.product_service import ProductService
+from app.services.product_service import ProductService, ProductResult, ProductError
 from app.services.session_service import SessionError, auth_required
 
 
@@ -43,5 +43,9 @@ class Query:
         return await OrderService.get_order_items(info.context["db"], user, order_id)
 
     @strawberry.field
-    async def products(self, info: Info) -> list[ProductType]:
+    async def products(self, info: Info) -> ProductResult:
         return await ProductService.products(info.context["db"])
+
+    @strawberry.field
+    async def get_product(self, info: Info, pid: str) -> ProductResult | ProductError:
+        return await ProductService.single_product(info.context["db"], pid)
