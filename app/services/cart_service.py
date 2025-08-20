@@ -52,7 +52,8 @@ class CartService:
                 return CartError(message="На складе недостаточно товара")
             new_cart_item = CartItem(user_id=user.id,
                                      product_id=pid,
-                                     quantity=qnt)
+                                     quantity=qnt,
+                                     price=check.price*qnt)
             db.add(new_cart_item)
             await db.commit()
             return CartMessage(message="Товар добавлен в корзину")
