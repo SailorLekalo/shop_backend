@@ -21,7 +21,6 @@ class AuthError:
 
 
 class AuthService:
-    session_expiry_minutes: int = 10
 
     @classmethod
     async def register(cls,
@@ -49,7 +48,7 @@ class AuthService:
     async def auth(cls,
                    db: AsyncSessionLocal,
                    user_name: str,
-                   password: str) -> AuthError | AuthSuccess:
+                   password: str, session_expiry_minutes: int = 10) -> AuthError | AuthSuccess:
 
         user = await db.execute(select(User).where(User.username == user_name))
         user = user.scalars().first()
