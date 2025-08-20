@@ -10,22 +10,30 @@ from app.models.user import User
 class OrderError:
     message: str
 
+
 @strawberry.type
 class OrderItemError:
     message: str
+
 
 @strawberry.type
 class OrderResult:
     result: list[OrderType]
 
+
 @strawberry.type
 class OrderItemResult:
     result: list[OrderItemType]
+
+
 class OrderService:
 
     @classmethod
     async def get_order(cls, db: AsyncSessionLocal, user: User) -> OrderResult | OrderError:
-        items = await db.execute(select(OrderItem).where(Order.user_id == user.id))
+        items = await db.execute(select(OrderItem)
+                                 .join(Order, OrderItem.order_id == Order.id)
+                                 .where(Order.user_id == user.id)
+                                 )
 
         items_list = []
         for item in items:
