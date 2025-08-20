@@ -45,3 +45,5 @@ class SessionService:
         user = await db.execute(select(User).where(User.id == check.user_id))
 
         return user.scalars().first()
+
+

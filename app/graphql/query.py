@@ -10,6 +10,7 @@ from app.services.order_service import OrderError, OrderService, OrderResult, Or
 from app.services.product_service import ProductService
 from app.services.session_service import SessionError, auth_required
 
+
 @strawberry.type
 class Query:
     @strawberry.field
@@ -27,6 +28,7 @@ class Query:
         cart = await CartService.get_cart(info.context["db"], user)
         return cart
 
+
     @strawberry.field
     async def get_order_history(self, info: Info) -> SessionError | OrderError | OrderResult:
         user = await auth_required(info)
@@ -43,7 +45,7 @@ class Query:
         return await OrderService.get_orders(info.context["db"], user)
 
     @strawberry.field
-    async def get_order(self, info: Info, order_id: str) -> SessionError | OrderItemResult | OrderError:
+    async def get_order_items(self, info: Info, order_id: str) -> SessionError | OrderItemResult | OrderError:
         user = await auth_required(info)
         if isinstance(user, SessionError): return user
 
