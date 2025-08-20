@@ -28,15 +28,6 @@ class Query:
         cart = await CartService.get_cart(info.context["db"], user)
         return cart
 
-
-    @strawberry.field
-    async def get_order_history(self, info: Info) -> SessionError | OrderError | OrderResult:
-        user = await auth_required(info)
-        if isinstance(user, SessionError): return user
-
-        orders = await OrderService.get_order(info.context["db"], user)
-        return orders
-
     @strawberry.field
     async def get_orders(self, info: Info) -> SessionError | OrderResult | OrderError:
         user = await auth_required(info)
