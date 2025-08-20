@@ -13,13 +13,20 @@ from app.services.session_service import SessionError, auth_required
 class Mutation:
     @strawberry.mutation
     async def register(self, username: str, password: str, info: Info) -> AuthError | AuthSuccess:
-        result = await AuthService().register(info.context["db"], username, password)
+        result = await AuthService.register(info.context["db"], username, password)
         return result
 
     @strawberry.mutation
     async def auth(self, username: str, password: str, info: Info) -> AuthError | AuthSuccess:
-        result = await AuthService().auth(info.context["db"], username, password)
+        result = await AuthService.auth(info.context["db"], username, password)
         return result
+
+    @strawberry.field
+    async def logout(self, info: Info) -> SessionError:
+        user = await auth_required(info)
+        if isinstance(user, SessionError): return user
+
+        return await AuthService.logout(info.context["db"], user)
 
     @strawberry.mutation
     async def add_to_cart(self, product_id: str, quantity: int, info: Info) -> SessionError | CartMessage | CartError:

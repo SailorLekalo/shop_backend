@@ -21,9 +21,10 @@ class AuthError:
 
 
 class AuthService:
-    def __init__(self, session_expiry_minutes: int = 10):
-        self.session_expiry_minutes = session_expiry_minutes
-    async def register(self,
+    session_expiry_minutes: int = 10
+
+    @classmethod
+    async def register(cls,
                        db: AsyncSessionLocal,
                        username: str,
                        password: str) -> AuthError | AuthSuccess:  # регистрация
@@ -44,7 +45,8 @@ class AuthService:
         await db.commit()
         return AuthSuccess(token=new_user.id)
 
-    async def auth(self,
+    @classmethod
+    async def auth(cls,
                    db: AsyncSessionLocal,
                    user_name: str,
                    password: str) -> AuthError | AuthSuccess:
@@ -64,10 +66,21 @@ class AuthService:
         new_session = Session(
             ses_id=uuid.uuid4(),
             user_id=user.id,
-            expires_at=datetime.now() + timedelta(minutes=self.session_expiry_minutes)
+            expires_at=datetime.now() + timedelta(minutes=session_expiry_minutes)
         )
 
         db.add(new_session)
         await db.commit()
 
         return AuthSuccess(token=f"Ваш токен сессии: {str(new_session.ses_id)}")
+
+    @classmethod
+    async def logout(cls,
+                     db: AsyncSessionLocal,
+                     user: User):
+        sessions = await db.execute(select(Session).where(Session.user_id == user.id))
+        sessions = sessions.scalars().all()
+        for ses in sessions:
+            db.delete(ses)
+        db.commit()
+        return AuthSuccess(token="Вы разлогинились")
