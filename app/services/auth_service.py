@@ -39,7 +39,7 @@ class AuthService:
                 password.encode('utf-8'),
                 bcrypt.gensalt()
             ).decode('utf-8'),
-            handler=handler
+            telegram_handler=handler
         )
 
         db.add(new_user)
