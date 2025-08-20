@@ -13,7 +13,7 @@ from app.services.product_service import ProductService
 from app.services.session_service import SessionService, SessionError
 
 
-async def auth_required(info: Info) -> UserType | SessionError:
+async def auth_required(info: Info) -> User | SessionError:
     db = info.context["db"]
     user = await SessionService().user_by_session(info, db)
     return user
@@ -83,9 +83,11 @@ class Mutation:
         return result
 
     @strawberry.mutation
-    async def place_order(self, info: Info) -> SessionError:
+    async def place_order(self, info: Info) -> SessionError | OrderResult | OrderError:
         user = await auth_required(info)
         if isinstance(user, SessionError): return user
+
+        return await OrderService.place_order(info.context["db"], user)
         
 
 
