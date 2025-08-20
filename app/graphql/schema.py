@@ -33,7 +33,7 @@ class Query:
         user = await auth_required(info)
         if isinstance(user, SessionError): return user
 
-        cart = await CartService.get_cart(AsyncSessionLocal(), user)
+        cart = await CartService.get_cart(info.context["db"], user)
         return cart
 
     @strawberry.field
@@ -41,7 +41,7 @@ class Query:
         user = await auth_required(info)
         if isinstance(user, SessionError): return user
 
-        orders = await OrderService.get_order(AsyncSessionLocal(), user)
+        orders = await OrderService.get_order(info.context["db"], user)
         return orders
 
     @strawberry.field
@@ -50,20 +50,20 @@ class Query:
         pass
 
     @strawberry.field
-    async def products(self) -> list[ProductType]:
-        return await ProductService.products(AsyncSessionLocal())
+    async def products(self, info: Info) -> list[ProductType]:
+        return await ProductService.products(info.context["db"])
 
 
 @strawberry.type
 class Mutation:
     @strawberry.mutation
-    async def register(self, username: str, password: str) -> AuthError | AuthSuccess:
-        result = await AuthService().register(AsyncSessionLocal(), username, password)
+    async def register(self, username: str, password: str, info: Info) -> AuthError | AuthSuccess:
+        result = await AuthService().register(info.context["db"], username, password)
         return result
 
     @strawberry.mutation
-    async def auth(self, username: str, password: str) -> AuthError | AuthSuccess:
-        result = await AuthService().auth(AsyncSessionLocal(), username, password)
+    async def auth(self, username: str, password: str, info: Info) -> AuthError | AuthSuccess:
+        result = await AuthService().auth(info.context["db"], username, password)
         return result
 
     @strawberry.mutation
@@ -71,8 +71,7 @@ class Mutation:
         user = await auth_required(info)
         if isinstance(user, SessionError): return user
 
-
-        result = await CartService.add_to_cart(AsyncSessionLocal(), user, product_id, quantity)
+        result = await CartService.add_to_cart(info.context["db"], user, product_id, quantity)
         return result
 
     @strawberry.mutation
@@ -80,13 +79,14 @@ class Mutation:
         user = await auth_required(info)
         if isinstance(user, SessionError): return user
 
-
-        result = await CartService.remove_from_cart(AsyncSessionLocal(), user, product_id, quantity)
+        result = await CartService.remove_from_cart(info.context["db"], user, product_id, quantity)
         return result
 
     @strawberry.mutation
-    async def place_order(self, info: Info) -> str:
-        pass
+    async def place_order(self, info: Info) -> SessionError:
+        user = await auth_required(info)
+        if isinstance(user, SessionError): return user
+        
 
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)
