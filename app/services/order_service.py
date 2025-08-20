@@ -1,13 +1,17 @@
+
 import uuid
 
 import strawberry
+from aiogram import Bot
 from sqlalchemy import select
+from strawberry import Info
 
 from app.db.db_session import AsyncSessionLocal
 from app.models.cart import CartItem
 from app.models.order import OrderItemType, OrderItem, OrderType, Order
 from app.models.user import User
 
+import aiogram
 
 @strawberry.type
 class OrderError:
@@ -87,3 +91,46 @@ class OrderService:
 
         await db.commit()
         return OrderResult(result=[order])
+
+    @classmethod
+    async def change_status(cls, info: Info, order_id: str, new_status: str):
+        db = info.context["db"]
+        result = await db.execute(
+            select(Order).where(Order.id == uuid.UUID(order_id))
+        )
+        order = result.scalars().first()
+
+        if order is None:
+            return OrderError(message="Такого заказа не существует")
+
+        order.status = new_status
+        await db.commit()
+        await db.refresh(order)
+
+        user_result = await db.execute(select(User).where(User.id == order.user_id))
+        user = user_result.scalars().first()
+
+        if user and user.telegram_handler:
+            await cls._notificate(order.id,
+                                  order.user_id,
+                                  new_status,
+                                  info.context["bot"],
+                                  user.telegram_handler
+                                  )
+
+        return OrderResult(result=[OrderType.parseType(order)])
+
+    @classmethod
+    async def _notificate(cls,
+                          order_id: str,
+                          user_id: str,
+                          new_status: str,
+                          bot: Bot,
+                          handler: str):
+        message = (
+            f"📦 Новый статус заказа\n\n"
+            f"🆔 Order ID: <code>{order_id}</code>\n"
+            f"👤 User ID: <code>{user_id}</code>\n"
+            f"📌 Status: <b>{new_status}</b>"
+        )
+        await bot.send_message(handler, message)

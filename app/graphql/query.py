@@ -1,8 +1,6 @@
 import strawberry
 
 from strawberry.types import Info
-
-from app.models.product import ProductType
 from app.models.user import UserType
 
 from app.services.cart_service import CartService, CartError, CartResult

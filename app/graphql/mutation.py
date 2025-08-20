@@ -12,8 +12,8 @@ from app.services.session_service import SessionError, auth_required
 @strawberry.type
 class Mutation:
     @strawberry.mutation
-    async def register(self, username: str, password: str, info: Info) -> AuthError | AuthSuccess:
-        result = await AuthService.register(info.context["db"], username, password)
+    async def register(self, info: Info, username: str, password: str, handler: str | None = None) -> AuthError | AuthSuccess:
+        result = await AuthService.register(info.context["db"], username, password, handler)
         return result
 
     @strawberry.mutation
@@ -50,3 +50,11 @@ class Mutation:
         if isinstance(user, SessionError): return user
 
         return await OrderService.place_order(info.context["db"], user)
+
+    @strawberry.mutation
+    async def change_order_status(self, info: Info, order_id: str, new_status: str) -> SessionError | OrderResult | OrderError:
+        user = await auth_required(info)
+        if isinstance(user, SessionError): return user
+        if not user.is_admin: return SessionError(message="Для этой операции требуется статус администратора")
+
+        return await OrderService.change_status(info, order_id, new_status)

@@ -26,7 +26,8 @@ class AuthService:
     async def register(cls,
                        db: AsyncSessionLocal,
                        username: str,
-                       password: str) -> AuthError | AuthSuccess:  # регистрация
+                       password: str,
+                       handler: str | None) -> AuthError | AuthSuccess:  # регистрация
 
         check = await db.execute(select(User).where(User.username == username))
         if check.scalars().first() is not None:
@@ -37,7 +38,8 @@ class AuthService:
             password_hash=bcrypt.hashpw(
                 password.encode('utf-8'),
                 bcrypt.gensalt()
-            ).decode('utf-8')
+            ).decode('utf-8'),
+            handler=handler
         )
 
         db.add(new_user)
