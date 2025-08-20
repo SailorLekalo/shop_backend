@@ -11,6 +11,7 @@ class Order(Base):
     user_id = Column(ForeignKey("users.id", ondelete="CASCADE"))
     id = Column(UUID, primary_key=True, default=uuid.uuid4)
     status = Column(String(30))
+    price = Column(Numeric)
 
 
 class OrderItem(Base):
@@ -28,13 +29,15 @@ class OrderType:
     user_id: str
     id: str
     status: str
+    price: float
 
     @classmethod
     def parseType(cls, order: Order):
         return OrderType(
             user_id=str(order.user_id),
             id=str(order.id),
-            status=order.status
+            status=order.status,
+            price=order.price
         )
 
 
