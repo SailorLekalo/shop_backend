@@ -22,7 +22,7 @@ class Mutation:
         return result
 
     @strawberry.field
-    async def logout(self, info: Info) -> SessionError:
+    async def logout(self, info: Info) -> SessionError | AuthSuccess:
         user = await auth_required(info)
         if isinstance(user, SessionError): return user
 

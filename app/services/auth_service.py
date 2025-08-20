@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 import strawberry
 import bcrypt
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from app.db.db_session import AsyncSessionLocal
 from app.models.sessions import Session
@@ -76,10 +76,7 @@ class AuthService:
     @classmethod
     async def logout(cls,
                      db: AsyncSessionLocal,
-                     user: User):
-        sessions = await db.execute(select(Session).where(Session.user_id == user.id))
-        sessions = sessions.scalars().all()
-        for ses in sessions:
-            db.delete(ses)
-        db.commit()
+                     user: User) -> AuthSuccess:
+        await db.execute(delete(Session).where(Session.user_id == user.id))
+        await db.commit()
         return AuthSuccess(token="Вы разлогинились")
