@@ -21,7 +21,7 @@ class OrderItemError:
 
 @strawberry.type
 class OrderResult:
-    result: OrderType
+    result: list[OrderType]
 
 
 @strawberry.type
@@ -32,16 +32,31 @@ class OrderItemResult:
 class OrderService:
 
     @classmethod
-    async def get_order(cls, db: AsyncSessionLocal, user: User) -> OrderItemResult | OrderError:
-        items = await db.execute(select(OrderItem)
-                                 .join(Order, OrderItem.order_id == Order.id)
-                                 .where(Order.user_id == user.id)
-                                 )
+    async def get_orders(cls, db: AsyncSessionLocal, user: User) -> OrderResult:
+        result = await db.execute(select(Order).where(Order.user_id == user.id))
+        orders = result.scalars().all()
 
-        items_list = []
-        for item in items:
-            items_list.append(OrderItemType.parseType(item))
+        return OrderResult(result=[OrderType.parseType(o) for o in orders])
 
+    @classmethod
+    async def get_order_items(cls,
+                              db: AsyncSessionLocal,
+                              user: User,
+                              order_id: str) -> OrderItemResult | OrderError:
+
+        order_check = await db.execute(
+            select(Order)
+            .where(Order.id == order_id,
+                  Order.user_id == user.id)
+        )
+        order = order_check.scalars().first()
+        if not order:
+            return OrderError(message="Заказ не найден или доступ запрещён")
+
+        result = await db.execute(select(OrderItem).where(OrderItem.order_id == order_id))
+        items = result.scalars().all()
+
+        items_list = [OrderItemType.parseType(item) for item in items]
         return OrderItemResult(result=items_list)
 
     @classmethod
@@ -71,4 +86,4 @@ class OrderService:
             await db.delete(item)
 
         await db.commit()
-        return OrderResult(result=order)
+        return OrderResult(result=[order])

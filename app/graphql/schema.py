@@ -8,7 +8,7 @@ from app.models.user import UserType, User
 
 from app.services.auth_service import AuthService, AuthError, AuthSuccess
 from app.services.cart_service import CartService, CartError, CartResult, CartMessage
-from app.services.order_service import OrderError, OrderService, OrderResult
+from app.services.order_service import OrderError, OrderService, OrderResult, OrderItemResult
 from app.services.product_service import ProductService
 from app.services.session_service import SessionService, SessionError
 
@@ -45,9 +45,18 @@ class Query:
         return orders
 
     @strawberry.field
-    async def get_order(self, info: Info, order_id: str) -> SessionError:
-        # Этого функционала пока нет
-        pass
+    async def get_orders(self, info: Info) -> SessionError | OrderResult | OrderError:
+        user = await auth_required(info)
+        if isinstance(user, SessionError): return user
+
+        return await OrderService.get_orders(info.context["db"], user)
+
+    @strawberry.field
+    async def get_order(self, info: Info, order_id: str) -> SessionError | OrderItemResult | OrderError:
+        user = await auth_required(info)
+        if isinstance(user, SessionError): return user
+
+        return await OrderService.get_order_items(info.context["db"], user, order_id)
 
     @strawberry.field
     async def products(self, info: Info) -> list[ProductType]:
