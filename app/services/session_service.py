@@ -14,6 +14,12 @@ class SessionError:
     message: str
 
 
+async def auth_required(info: Info) -> User | SessionError:
+    db = info.context["db"]
+    user = await SessionService().user_by_session(info, db)
+    return user
+
+
 class SessionService:
     async def check_session_expiration(self, check_ses: Session):
         if check_ses.expires_at > datetime.now():

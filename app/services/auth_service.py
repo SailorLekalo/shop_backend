@@ -20,7 +20,6 @@ class AuthError:
     message: str
 
 
-
 class AuthService:
     def __init__(self, session_expiry_minutes: int = 10):
         self.session_expiry_minutes = session_expiry_minutes
