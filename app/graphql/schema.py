@@ -4,7 +4,7 @@ from strawberry.types import Info
 
 from app.db.db_session import AsyncSessionLocal
 from app.models.product import ProductType
-from app.models.user import UserType
+from app.models.user import UserType, User
 
 from app.services.auth_service import AuthService, AuthError, AuthSuccess
 from app.services.cart_service import CartService, CartError, CartResult, CartMessage
@@ -13,39 +13,40 @@ from app.services.product_service import ProductService
 from app.services.session_service import SessionService, SessionError
 
 
+async def auth_required(info: Info) -> UserType | SessionError:
+    db = info.context["db"]
+    user = await SessionService().user_by_session(info, db)
+    return user
+
+
 @strawberry.type
 class Query:
     @strawberry.field
     async def me(self, info: Info) -> UserType | SessionError:  # По sessionid возвращает информацию о юзере
-        user = await SessionService().user_by_session(info, AsyncSessionLocal())
-        if isinstance(user, SessionError):
-            return user
+        user = await auth_required(info)
+        if isinstance(user, SessionError): return user
 
         return UserType.parseType(user)
 
     @strawberry.field
     async def get_cart(self, info: Info) -> SessionError | CartError | CartResult:
-
-        user = await SessionService().user_by_session(info, AsyncSessionLocal())
-        if isinstance(user, SessionError):
-            return user
+        user = await auth_required(info)
+        if isinstance(user, SessionError): return user
 
         cart = await CartService.get_cart(AsyncSessionLocal(), user)
         return cart
 
     @strawberry.field
     async def get_order_history(self, info: Info) -> SessionError | OrderError | OrderResult:
-
-        user = await SessionService().user_by_session(info, AsyncSessionLocal())
-        if isinstance(user, SessionError):
-            return user
+        user = await auth_required(info)
+        if isinstance(user, SessionError): return user
 
         orders = await OrderService.get_order(AsyncSessionLocal(), user)
         return orders
 
     @strawberry.field
     async def get_order(self, info: Info, order_id: str) -> SessionError:
-        #Этого функционала пока нет
+        # Этого функционала пока нет
         pass
 
     @strawberry.field
@@ -66,27 +67,26 @@ class Mutation:
         return result
 
     @strawberry.mutation
-    async def add_to_cart(self, info: Info, product_id: str, quantity: int) -> SessionError | CartMessage | CartError:
-        user = await SessionService().user_by_session(info, AsyncSessionLocal())
-        if isinstance(user, SessionError):
-            return user
+    async def add_to_cart(self, product_id: str, quantity: int, info: Info) -> SessionError | CartMessage | CartError:
+        user = await auth_required(info)
+        if isinstance(user, SessionError): return user
+
 
         result = await CartService.add_to_cart(AsyncSessionLocal(), user, product_id, quantity)
         return result
 
     @strawberry.mutation
-    async def remove_from_cart(self, info: Info, product_id: str, quantity: int) -> SessionError | CartMessage | CartError:
-        user = await SessionService().user_by_session(info, AsyncSessionLocal())
-        if isinstance(user, SessionError):
-            return user
+    async def remove_from_cart(self, product_id: str, quantity: int, info: Info) -> SessionError | CartMessage | CartError:
+        user = await auth_required(info)
+        if isinstance(user, SessionError): return user
+
 
         result = await CartService.remove_from_cart(AsyncSessionLocal(), user, product_id, quantity)
         return result
 
     @strawberry.mutation
     async def place_order(self, info: Info) -> str:
-        user = await SessionService().user_by_session(info, AsyncSessionLocal())
-        if isinstance(user, SessionError):
-            return user
+        pass
+
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)
