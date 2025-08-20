@@ -45,10 +45,8 @@ class Query:
 
     @strawberry.field
     async def get_order(self, info: Info, order_id: str) -> SessionError:
-
-        user = await SessionService().user_by_session(info, AsyncSessionLocal())
-        if isinstance(user, SessionError):
-            return user
+        #Этого функционала пока нет
+        pass
 
     @strawberry.field
     async def products(self) -> list[ProductType]:
