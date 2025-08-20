@@ -72,7 +72,7 @@ class CartService:
         if check_product.scalars().first() is None:
             return CartError(message="Продукт не существует")
 
-        item = await db.execute(select(CartItem).where(CartItem.product_id == pid and CartItem.user_id == user.id))
+        item = await db.execute(select(CartItem).where(CartItem.product_id == pid, CartItem.user_id == user.id))
         item = item.scalars().first()
         if item is None:
             return CartError(message="Продукта в корзине нет")
