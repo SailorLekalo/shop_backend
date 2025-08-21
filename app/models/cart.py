@@ -1,5 +1,5 @@
 import strawberry
-from sqlalchemy import Integer, Column, ForeignKey, Numeric
+from sqlalchemy import Column, ForeignKey, Integer, Numeric
 
 from app.models.base import Base
 

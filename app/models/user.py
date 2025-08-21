@@ -1,6 +1,7 @@
-import strawberry
-from sqlalchemy import UUID, String, Boolean, Column
 import uuid
+
+import strawberry
+from sqlalchemy import UUID, Boolean, Column, String
 
 from app.models.base import Base
 
@@ -28,5 +29,5 @@ class UserType:
             id=str(user.id),
             username=user.username,
             isAdmin=user.is_admin,
-            telegram_handler=user.telegram_handler
+            telegram_handler=user.telegram_handler,
         )

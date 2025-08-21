@@ -1,6 +1,7 @@
-import strawberry
-from sqlalchemy import UUID, TIMESTAMP, Column, ForeignKey
 import uuid
+
+import strawberry
+from sqlalchemy import TIMESTAMP, UUID, Column, ForeignKey
 
 from app.models.base import Base
 

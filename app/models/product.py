@@ -1,6 +1,7 @@
-from sqlalchemy import UUID, Numeric, Column, String
-import strawberry
 import uuid
+
+import strawberry
+from sqlalchemy import UUID, Column, Numeric, String
 
 from app.models.base import Base
 

@@ -1,6 +1,7 @@
+import uuid
+
 import strawberry
 from sqlalchemy import UUID, Column, ForeignKey, String
-import uuid
 
 from app.models.base import Base
 

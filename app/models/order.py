@@ -1,6 +1,7 @@
-import strawberry
-from sqlalchemy import UUID, Numeric, Column, ForeignKey, String
 import uuid
+
+import strawberry
+from sqlalchemy import UUID, Column, ForeignKey, Numeric, String
 
 from app.models.base import Base
 
@@ -37,7 +38,7 @@ class OrderType:
             user_id=str(order.user_id),
             id=str(order.id),
             status=order.status,
-            price=order.price
+            price=order.price,
         )
 
 
@@ -56,5 +57,5 @@ class OrderItemType:
             order_id=str(order_item.order_id),
             product_id=str(order_item.product_id),
             quantity=float(order_item.quantity),
-            price=float(order_item.price)
+            price=float(order_item.price),
         )
