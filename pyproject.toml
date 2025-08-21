@@ -27,6 +27,8 @@ ipython = ">=8.17.2"
 pytest = ">=7.4.0"
 pytest-asyncio = ">=0.23.0"
 httpx = ">=0.25.0"
+ruff = ">=0.6.0"
+pre-commit = ">=3.7.0"
 
 [build-system]
 requires = ["poetry-core>=1.8.0"]
@@ -40,3 +42,20 @@ makemigrations = "alembic revision --autogenerate -m"
 [tool.alembic]
 script_location = "app/migrations"
 sqlalchemy.url = "postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/${DB_NAME}"
+
+[tool.ruff]
+
+src = ["app"]
+target-version = "py311"
+line-length = 88
+exclude = [
+    ".venv",
+    "migrations"
+]
+select = ["ALL"]
+ignore = [
+    "D203",
+    "D212",
+    "E501",
+]
+fix = true
