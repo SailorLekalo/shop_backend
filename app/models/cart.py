@@ -1,7 +1,6 @@
-from typing import Self
-
 import strawberry
 from sqlalchemy import Column, ForeignKey, Integer, Numeric
+from typing_extensions import Self
 
 from app.models.base import Base
 

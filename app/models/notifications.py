@@ -1,8 +1,8 @@
 import uuid
-from typing import Self
 
 import strawberry
 from sqlalchemy import UUID, Column, ForeignKey, String
+from typing_extensions import Self
 
 from app.models.base import Base
 
