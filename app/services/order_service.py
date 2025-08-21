@@ -108,7 +108,7 @@ class OrderService:
         await db.commit()
         await db.refresh(order)
 
-        await cls._notificate_websocket(order.id,
+        await cls._notificate_websocket(order,
                                         new_status)
 
         return OrderResult(result=[OrderType.parse_type(order)])
@@ -130,6 +130,9 @@ class OrderService:
 
     @classmethod
     async def _notificate_websocket(cls,
-                                    order_id: str,
+                                    order: Order,
                                     new_status: str) -> None:
-        await order_queue.put(OrderType(id=str(order_id), status=new_status))
+        await order_queue.put(OrderType(user_id=order.user_id,
+                                        id=str(order.id),
+                                        status=new_status,
+                                        price=order.price))

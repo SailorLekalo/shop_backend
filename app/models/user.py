@@ -29,6 +29,6 @@ class UserType:
         return UserType(
             id=str(user.id),
             username=user.username,
-            isAdmin=user.is_admin,
+            is_admin=user.is_admin,
             telegram_handler=user.telegram_handler,
         )
