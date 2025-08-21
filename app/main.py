@@ -1,6 +1,7 @@
 import os
 from collections.abc import Callable
 from pathlib import Path
+from typing import Awaitable
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -38,20 +39,39 @@ async def db_session_middleware(request: Request,
     return response
 
 
+@app.middleware("http")
+async def cookie_middleware(request: Request,
+                            call_next: Callable[[Request], Awaitable[Response]],
+                            ) -> Response:
+    response: Response = await call_next(request)
+
+    cookies = getattr(request.state, "graphql_cookies", None)
+    if cookies:
+        for c in cookies:
+            response.set_cookie(**c)
+
+    return response
+
+
 async def get_context(request: Request = None,
                       websocket: WebSocket = None,
                       ) -> dict:
-
     connection = request or websocket
     db = getattr(connection.state, "db", None)
+
+
+
     if db is None:
         db = AsyncSessionLocal()
 
+    request.state.graphql_cookies = []
     return {
         "db": db,
         "request": connection,
+        "cookies": request.state.graphql_cookies,
         "bot": bot,
     }
+
 
 graphql_app = GraphQLRouter(schema, context_getter=get_context)
 app.include_router(graphql_app, prefix="/graphql")

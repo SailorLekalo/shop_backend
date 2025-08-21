@@ -50,7 +50,9 @@ class AuthService:
     async def auth(cls,
                    db: AsyncSessionLocal,
                    user_name: str,
-                   password: str, session_expiry_minutes: int = 10) -> AuthError | AuthSuccess:
+                   password: str,
+                   cookies: list,
+                   session_expiry_minutes: int = 10) -> AuthError | AuthSuccess:
 
         user = await db.execute(select(User).where(User.username == user_name))
         user = user.scalars().first()
@@ -73,12 +75,26 @@ class AuthService:
         db.add(new_session)
         await db.commit()
 
-        return AuthSuccess(message=f"Ваш токен сессии: {new_session.ses_id!s}")
+        cookies.append(
+            {
+                "key": "session",
+                "value": str(new_session.ses_id),
+                "httponly": True,
+                "max_age": session_expiry_minutes * 60,
+                "path": "/",
+            },
+        )
+
+        return AuthSuccess(message="Вы успешно залогинены")
 
     @classmethod
     async def logout(cls,
                      db: AsyncSessionLocal,
-                     user: User) -> AuthSuccess:
+                     user: User,
+                     cookies: list) -> AuthSuccess:
         await db.execute(delete(Session).where(Session.user_id == user.id))
         await db.commit()
+        cookies.append(
+            {"key": "session", "value": "", "max_age": 0, "path": "/"},
+        )
         return AuthSuccess(message="Вы разлогинились")

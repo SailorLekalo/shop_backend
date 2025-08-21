@@ -26,11 +26,7 @@ class SessionService:
     async def user_by_session(self, info: Info, db: AsyncSessionLocal) -> User | SessionError:
 
         request = info.context["request"]
-        auth_header = request.headers.get("authorization")
-        sessionid = None
-
-        if auth_header and auth_header.startswith("Bearer "):
-            sessionid = auth_header[len("Bearer "):]
+        sessionid = request.cookies.get("session")
         check = await db.execute(select(Session).where(Session.ses_id == sessionid))
         check = check.scalars().first()
 
