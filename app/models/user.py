@@ -1,4 +1,5 @@
 import uuid
+from typing import Self
 
 import strawberry
 from sqlalchemy import UUID, Boolean, Column, String
@@ -20,11 +21,11 @@ class User(Base):
 class UserType:
     id: str
     username: str
-    isAdmin: bool
+    is_admin: bool
     telegram_handler: str
 
     @classmethod
-    def parseType(cls, user: User):
+    def parse_type(cls, user: User) -> Self:
         return UserType(
             id=str(user.id),
             username=user.username,

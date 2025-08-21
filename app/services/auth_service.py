@@ -1,9 +1,9 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
-import strawberry
 import bcrypt
-from sqlalchemy import select, delete
+import strawberry
+from sqlalchemy import delete, select
 
 from app.db.db_session import AsyncSessionLocal
 from app.models.sessions import Session
@@ -12,7 +12,7 @@ from app.models.user import User
 
 @strawberry.type
 class AuthSuccess:
-    token: str
+    message: str
 
 
 @strawberry.type
@@ -36,15 +36,15 @@ class AuthService:
         new_user = User(
             username=username,
             password_hash=bcrypt.hashpw(
-                password.encode('utf-8'),
-                bcrypt.gensalt()
-            ).decode('utf-8'),
-            telegram_handler=handler
+                password.encode("utf-8"),
+                bcrypt.gensalt(),
+            ).decode("utf-8"),
+            telegram_handler=handler,
         )
 
         db.add(new_user)
         await db.commit()
-        return AuthSuccess(token=new_user.id)
+        return AuthSuccess(message=new_user.id)
 
     @classmethod
     async def auth(cls,
@@ -59,21 +59,21 @@ class AuthService:
             return AuthError(message="User not found")
 
         if not bcrypt.checkpw(
-                password.encode('utf-8'),
-                user.password_hash.encode('utf-8')
+                password.encode("utf-8"),
+                user.password_hash.encode("utf-8"),
         ):
             return AuthError(message="Invalid password")
 
         new_session = Session(
             ses_id=uuid.uuid4(),
             user_id=user.id,
-            expires_at=datetime.now() + timedelta(minutes=session_expiry_minutes)
+            expires_at=datetime.now(UTC) + timedelta(minutes=session_expiry_minutes),
         )
 
         db.add(new_session)
         await db.commit()
 
-        return AuthSuccess(token=f"Ваш токен сессии: {str(new_session.ses_id)}")
+        return AuthSuccess(message=f"Ваш токен сессии: {new_session.ses_id!s}")
 
     @classmethod
     async def logout(cls,
@@ -81,4 +81,4 @@ class AuthService:
                      user: User) -> AuthSuccess:
         await db.execute(delete(Session).where(Session.user_id == user.id))
         await db.commit()
-        return AuthSuccess(token="Вы разлогинились")
+        return AuthSuccess(message="Вы разлогинились")

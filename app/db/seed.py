@@ -1,5 +1,6 @@
 import asyncio
 import uuid
+
 import bcrypt
 
 from app.db.db_session import AsyncSessionLocal
@@ -7,7 +8,7 @@ from app.models.product import Product
 from app.models.user import User
 
 
-async def seed():
+async def seed() -> None:
     async with AsyncSessionLocal() as session:
 
         products = [
@@ -23,21 +24,20 @@ async def seed():
         admin_user = User(
             id=uuid.uuid4(),
             username="Yuki Nagato",
-            password_hash=bcrypt.hashpw("Snowbeauty".encode("utf-8"), bcrypt.gensalt()).decode("utf-8"),
+            password_hash=bcrypt.hashpw(b"Snowbeauty", bcrypt.gensalt()).decode("utf-8"),
             is_admin=True,
         )
 
         normal_user = User(
             id=uuid.uuid4(),
             username="Mikuru Asahina",
-            password_hash=bcrypt.hashpw("classifieddata".encode("utf-8"), bcrypt.gensalt()).decode("utf-8"),
+            password_hash=bcrypt.hashpw(b"classifieddata", bcrypt.gensalt()).decode("utf-8"),
             is_admin=False,
         )
 
         session.add_all([admin_user, normal_user])
 
         await session.commit()
-        print("Тестовые данные созданы")
 
 
 if __name__ == "__main__":

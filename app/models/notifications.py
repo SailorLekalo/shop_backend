@@ -1,4 +1,5 @@
 import uuid
+from typing import Self
 
 import strawberry
 from sqlalchemy import UUID, Column, ForeignKey, String
@@ -23,7 +24,7 @@ class NotificationsType:
     channel: str
 
     @classmethod
-    def parseType(cls, notifications: Notifications):
+    def parse_type(cls, notifications: Notifications) -> Self:
         return NotificationsType(id=str(notifications.id),
                                  user_id=str(notifications.user_id),
                                  order_id=str(notifications.order_id),

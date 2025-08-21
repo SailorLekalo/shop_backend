@@ -1,4 +1,5 @@
 import uuid
+from typing import Self
 
 import strawberry
 from sqlalchemy import TIMESTAMP, UUID, Column, ForeignKey
@@ -21,7 +22,7 @@ class SessionType:
     expires_at: str
 
     @classmethod
-    def parseType(cls, session: Session):
+    def parse_type(cls, session: Session) -> Self:
         return SessionType(ses_id=str(session.ses_id),
                            user_id=str(session.user_id),
                            expires_at=str(session.expires_at))

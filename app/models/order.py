@@ -1,4 +1,5 @@
 import uuid
+from typing import Self
 
 import strawberry
 from sqlalchemy import UUID, Column, ForeignKey, Numeric, String
@@ -33,7 +34,7 @@ class OrderType:
     price: float
 
     @classmethod
-    def parseType(cls, order: Order):
+    def parse_type(cls, order: Order) -> Self:
         return OrderType(
             user_id=str(order.user_id),
             id=str(order.id),
@@ -51,7 +52,7 @@ class OrderItemType:
     price: float
 
     @classmethod
-    def parseType(cls, order_item: OrderItem):
+    def parse_type(cls, order_item: OrderItem) -> Self:
         return OrderItemType(
             self_id=str(order_item.self_id),
             order_id=str(order_item.order_id),

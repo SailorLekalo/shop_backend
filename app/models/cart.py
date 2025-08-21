@@ -1,3 +1,5 @@
+from typing import Self
+
 import strawberry
 from sqlalchemy import Column, ForeignKey, Integer, Numeric
 
@@ -20,7 +22,7 @@ class CartItemType:
     price: float
 
     @classmethod
-    def parseType(cls, cart_item: CartItem):
+    def parse_type(cls, cart_item: CartItem) -> Self:
         return CartItemType(user_id=str(cart_item.user_id),
                             product_id=str(cart_item.product_id),
                             quantity=cart_item.quantity,

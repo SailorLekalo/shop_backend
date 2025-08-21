@@ -1,10 +1,9 @@
-import uuid
 
 import strawberry
 from sqlalchemy import select
 
 from app.db.db_session import AsyncSessionLocal
-from app.models.cart import CartItemType, CartItem
+from app.models.cart import CartItem, CartItemType
 from app.models.product import Product
 from app.models.user import User
 
@@ -30,9 +29,7 @@ class CartService:
     async def get_cart(cls, db: AsyncSessionLocal, user: User) -> CartResult | CartError:
         items = await db.execute(select(CartItem).where(CartItem.user_id == user.id))
         items = items.scalars().all()
-        items_list = []
-        for item in items:
-            items_list.append(CartItemType.parseType(item))
+        items_list = [CartItemType.parse_type(item) for item in items]
 
         return CartResult(result=items_list)
 
@@ -80,7 +77,6 @@ class CartService:
             item.quantity -= qnt
             await db.commit()
             return CartMessage(message="Количество товаров уменьшено")
-        else:
-            await db.delete(item)
-            await db.commit()
-            return CartMessage(message="Товар удалён из корзины")
+        await db.delete(item)
+        await db.commit()
+        return CartMessage(message="Товар удалён из корзины")

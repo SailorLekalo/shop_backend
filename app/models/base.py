@@ -1,7 +1,7 @@
 from app.db import db_session
 
-sessionBase = db_session.Base
+session_base = db_session.Base
 
 
-class Base(sessionBase):
+class Base(session_base):
     __abstract__ = True

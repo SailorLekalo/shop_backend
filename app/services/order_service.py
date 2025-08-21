@@ -8,10 +8,9 @@ from strawberry import Info
 
 from app.db.db_session import AsyncSessionLocal
 from app.models.cart import CartItem
-from app.models.order import OrderItemType, OrderItem, OrderType, Order
+from app.models.order import Order, OrderItem, OrderItemType, OrderType
 from app.models.user import User
 
-import aiogram
 
 @strawberry.type
 class OrderError:
@@ -40,7 +39,7 @@ class OrderService:
         result = await db.execute(select(Order).where(Order.user_id == user.id))
         orders = result.scalars().all()
 
-        return OrderResult(result=[OrderType.parseType(o) for o in orders])
+        return OrderResult(result=[OrderType.parse_type(o) for o in orders])
 
     @classmethod
     async def get_order_items(cls,
@@ -51,7 +50,7 @@ class OrderService:
         order_check = await db.execute(
             select(Order)
             .where(Order.id == order_id,
-                  Order.user_id == user.id)
+                  Order.user_id == user.id),
         )
         order = order_check.scalars().first()
         if not order:
@@ -60,7 +59,7 @@ class OrderService:
         result = await db.execute(select(OrderItem).where(OrderItem.order_id == order_id))
         items = result.scalars().all()
 
-        items_list = [OrderItemType.parseType(item) for item in items]
+        items_list = [OrderItemType.parse_type(item) for item in items]
         return OrderItemResult(result=items_list)
 
     @classmethod
@@ -93,10 +92,10 @@ class OrderService:
         return OrderResult(result=[order])
 
     @classmethod
-    async def change_status(cls, info: Info, order_id: str, new_status: str):
+    async def change_status(cls, info: Info, order_id: str, new_status: str) -> OrderError | OrderResult:
         db = info.context["db"]
         result = await db.execute(
-            select(Order).where(Order.id == uuid.UUID(order_id))
+            select(Order).where(Order.id == uuid.UUID(order_id)),
         )
         order = result.scalars().first()
 
@@ -115,10 +114,10 @@ class OrderService:
                                   order.user_id,
                                   new_status,
                                   info.context["bot"],
-                                  user.telegram_handler
+                                  user.telegram_handler,
                                   )
 
-        return OrderResult(result=[OrderType.parseType(order)])
+        return OrderResult(result=[OrderType.parse_type(order)])
 
     @classmethod
     async def _notificate(cls,
@@ -126,7 +125,7 @@ class OrderService:
                           user_id: str,
                           new_status: str,
                           bot: Bot,
-                          handler: str):
+                          handler: str) -> None:
         message = (
             f"📦 Новый статус заказа\n\n"
             f"🆔 Order ID: <code>{order_id}</code>\n"

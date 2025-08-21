@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 import strawberry
 from sqlalchemy import select
@@ -16,15 +16,12 @@ class SessionError:
 
 async def auth_required(info: Info) -> User | SessionError:
     db = info.context["db"]
-    user = await SessionService().user_by_session(info, db)
-    return user
+    return await SessionService().user_by_session(info, db)
 
 
 class SessionService:
-    async def check_session_expiration(self, check_ses: Session):
-        if check_ses.expires_at > datetime.now():
-            return False
-        return True
+    async def check_session_expiration(self, check_ses: Session) -> True | False:
+        return not(check_ses.expires_at > datetime.now(UTC))
 
     async def user_by_session(self, info: Info, db: AsyncSessionLocal) -> User | SessionError:
 
@@ -45,5 +42,3 @@ class SessionService:
         user = await db.execute(select(User).where(User.id == check.user_id))
 
         return user.scalars().first()
-
-

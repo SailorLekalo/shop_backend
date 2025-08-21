@@ -1,4 +1,5 @@
 import uuid
+from typing import Self
 
 import strawberry
 from sqlalchemy import UUID, Column, Numeric, String
@@ -25,7 +26,7 @@ class ProductType:
     amount: int
 
     @classmethod
-    def parseType(cls, product: Product):
+    def parse_type(cls, product: Product) -> Self:
         return ProductType(id=str(product.id),
                            name=product.name,
                            description=product.description,
