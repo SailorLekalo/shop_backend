@@ -21,7 +21,7 @@ async def auth_required(info: Info) -> User | SessionError:
 
 class SessionService:
     async def check_session_expiration(self, check_ses: Session) -> True | False:
-        return not(check_ses.expires_at > datetime.now(UTC))
+        return not (check_ses.expires_at > datetime.now(UTC))
 
     async def user_by_session(self, info: Info, db: AsyncSessionLocal) -> User | SessionError:
 

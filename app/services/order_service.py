@@ -1,4 +1,4 @@
-
+import asyncio
 import uuid
 
 import strawberry
@@ -7,6 +7,7 @@ from sqlalchemy import select
 from strawberry import Info
 
 from app.db.db_session import AsyncSessionLocal
+from app.events import order_queue
 from app.models.cart import CartItem
 from app.models.order import Order, OrderItem, OrderItemType, OrderType
 from app.models.user import User
@@ -33,6 +34,7 @@ class OrderItemResult:
 
 
 class OrderService:
+    order_queue: asyncio.Queue = asyncio.Queue()
 
     @classmethod
     async def get_orders(cls, db: AsyncSessionLocal, user: User) -> OrderResult:
@@ -50,7 +52,7 @@ class OrderService:
         order_check = await db.execute(
             select(Order)
             .where(Order.id == order_id,
-                  Order.user_id == user.id),
+                   Order.user_id == user.id),
         )
         order = order_check.scalars().first()
         if not order:
@@ -106,26 +108,18 @@ class OrderService:
         await db.commit()
         await db.refresh(order)
 
-        user_result = await db.execute(select(User).where(User.id == order.user_id))
-        user = user_result.scalars().first()
-
-        if user and user.telegram_handler:
-            await cls._notificate(order.id,
-                                  order.user_id,
-                                  new_status,
-                                  info.context["bot"],
-                                  user.telegram_handler,
-                                  )
+        await cls._notificate_websocket(order.id,
+                                        new_status)
 
         return OrderResult(result=[OrderType.parse_type(order)])
 
     @classmethod
-    async def _notificate(cls,
-                          order_id: str,
-                          user_id: str,
-                          new_status: str,
-                          bot: Bot,
-                          handler: str) -> None:
+    async def _notificate_telegram(cls,
+                                   order_id: str,
+                                   user_id: str,
+                                   new_status: str,
+                                   bot: Bot,
+                                   handler: str) -> None:
         message = (
             f"📦 Новый статус заказа\n\n"
             f"🆔 Order ID: <code>{order_id}</code>\n"
@@ -133,3 +127,9 @@ class OrderService:
             f"📌 Status: <b>{new_status}</b>"
         )
         await bot.send_message(handler, message)
+
+    @classmethod
+    async def _notificate_websocket(cls,
+                                    order_id: str,
+                                    new_status: str) -> None:
+        await order_queue.put(OrderType(id=str(order_id), status=new_status))
