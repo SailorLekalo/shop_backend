@@ -1,4 +1,5 @@
 import asyncio
+import enum
 import uuid
 
 import strawberry
@@ -11,6 +12,15 @@ from app.events import order_queue
 from app.models.cart import CartItem
 from app.models.order import Order, OrderItem, OrderItemType, OrderType
 from app.models.user import User
+
+
+@strawberry.enum
+class OrderStatusEnum(str, enum.Enum):
+    IN_PROCESS = "In process"
+    PAID = "Paid"
+    SHIPPED = "Shipped"
+    DELIVERED = "Delivered"
+    CANCELED = "Canceled"
 
 
 @strawberry.type
@@ -94,7 +104,10 @@ class OrderService:
         return OrderResult(result=[order])
 
     @classmethod
-    async def change_status(cls, info: Info, order_id: str, new_status: str) -> OrderError | OrderResult:
+    async def change_status(cls, info: Info,
+                            order_id: str,
+                            new_status: OrderStatusEnum,
+                            ) -> OrderError | OrderResult:
         db = info.context["db"]
         result = await db.execute(
             select(Order).where(Order.id == uuid.UUID(order_id)),
@@ -104,7 +117,7 @@ class OrderService:
         if order is None:
             return OrderError(message="Такого заказа не существует")
 
-        order.status = new_status
+        order.status = new_status.value
         await db.commit()
         await db.refresh(order)
 

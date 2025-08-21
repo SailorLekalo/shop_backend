@@ -3,7 +3,12 @@ from strawberry.types import Info
 
 from app.services.auth_service import AuthError, AuthService, AuthSuccess
 from app.services.cart_service import CartError, CartMessage, CartService
-from app.services.order_service import OrderError, OrderResult, OrderService
+from app.services.order_service import (
+    OrderError,
+    OrderResult,
+    OrderService,
+    OrderStatusEnum,
+)
 from app.services.session_service import SessionError, auth_required
 
 
@@ -53,7 +58,7 @@ class Mutation:
         return await OrderService.place_order(info.context["db"], user)
 
     @strawberry.mutation
-    async def change_order_status(self, info: Info, order_id: str, new_status: str) -> SessionError | OrderResult | OrderError:
+    async def change_order_status(self, info: Info, order_id: str, new_status: OrderStatusEnum) -> SessionError | OrderResult | OrderError:
         user = await auth_required(info)
         if isinstance(user, SessionError):
             return user
