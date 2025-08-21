@@ -15,6 +15,11 @@
 docker compose up -d db
 ```
 
+### 3) Сидинг первичных данных в базу
+```bash
+docker compose exec app poetry run python -m app.db.seed
+```
+
 # Документация API
 
 ## 📋 Содержание
