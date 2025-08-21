@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import bcrypt
 import strawberry
@@ -67,7 +67,7 @@ class AuthService:
         new_session = Session(
             ses_id=uuid.uuid4(),
             user_id=user.id,
-            expires_at=datetime.now(timezone.utc) + timedelta(minutes=session_expiry_minutes),
+            expires_at=datetime.now() + timedelta(minutes=session_expiry_minutes),
         )
 
         db.add(new_session)
