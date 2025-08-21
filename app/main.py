@@ -56,21 +56,33 @@ async def cookie_middleware(request: Request,
 async def get_context(request: Request = None,
                       websocket: WebSocket = None,
                       ) -> dict:
-    connection = request or websocket
-    db = getattr(connection.state, "db", None)
+    if request is None:
+        connection = websocket
+        db = getattr(connection.state, "db", None)
 
+        if db is None:
+            db = AsyncSessionLocal()
 
+        return {
+            "db": db,
+            "request": connection,
+            "bot": bot,
+        }
+    if websocket is None:
+        connection = request
+        db = getattr(connection.state, "db", None)
 
-    if db is None:
-        db = AsyncSessionLocal()
+        if db is None:
+            db = AsyncSessionLocal()
 
-    request.state.graphql_cookies = []
-    return {
-        "db": db,
-        "request": connection,
-        "cookies": request.state.graphql_cookies,
-        "bot": bot,
-    }
+        connection.state.graphql_cookies = []
+        return {
+            "db": db,
+            "request": connection,
+            "cookies": request.state.graphql_cookies,
+            "bot": bot,
+        }
+    return {}
 
 
 graphql_app = GraphQLRouter(schema, context_getter=get_context)
