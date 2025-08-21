@@ -1,7 +1,7 @@
 import uuid
 
 import strawberry
-from sqlalchemy import TIMESTAMP, UUID, Column, ForeignKey
+from sqlalchemy import UUID, Column, DateTime, ForeignKey
 from typing_extensions import Self
 
 from app.models.base import Base
@@ -12,7 +12,7 @@ class Session(Base):
 
     ses_id = Column(UUID, primary_key=True, default=uuid.uuid4)
     user_id = Column(ForeignKey("users.id", ondelete="CASCADE"))
-    expires_at = Column(TIMESTAMP)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
 
 
 @strawberry.type
