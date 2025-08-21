@@ -12,7 +12,7 @@
 
 ### 2) Запуск инфраструктуры
 ```bash
-docker compose up -d db
+docker compose up -d
 ```
 
 ### 3) Сидинг первичных данных в базу
