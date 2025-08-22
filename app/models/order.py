@@ -1,10 +1,21 @@
+import enum
 import uuid
 
 import strawberry
-from sqlalchemy import UUID, Column, ForeignKey, Numeric, String
+from sqlalchemy import UUID, Column, Enum, ForeignKey, Numeric, select
+from strawberry import Info
 from typing_extensions import Self
 
 from app.models.base import Base
+
+
+@strawberry.enum
+class OrderStatusEnum(str, enum.Enum):
+    IN_PROCESS = "In process"
+    PAID = "Paid"
+    SHIPPED = "Shipped"
+    DELIVERED = "Delivered"
+    CANCELED = "Canceled"
 
 
 class Order(Base):
@@ -12,7 +23,7 @@ class Order(Base):
 
     user_id = Column(ForeignKey("users.id", ondelete="CASCADE"))
     id = Column(UUID, primary_key=True, default=uuid.uuid4)
-    status = Column(String(30))
+    status = Column(Enum(OrderStatusEnum, name="status"), default=OrderStatusEnum.IN_PROCESS)
     price = Column(Numeric)
 
 
@@ -24,23 +35,6 @@ class OrderItem(Base):
     product_id = Column(ForeignKey("products.id"))
     quantity = Column(Numeric)
     price = Column(Numeric)
-
-
-@strawberry.type
-class OrderType:
-    user_id: str
-    id: str
-    status: str
-    price: float
-
-    @classmethod
-    def parse_type(cls, order: Order) -> Self:
-        return OrderType(
-            user_id=str(order.user_id),
-            id=str(order.id),
-            status=order.status,
-            price=order.price,
-        )
 
 
 @strawberry.type
@@ -59,4 +53,28 @@ class OrderItemType:
             product_id=str(order_item.product_id),
             quantity=float(order_item.quantity),
             price=float(order_item.price),
+        )
+
+
+@strawberry.type
+class OrderType:
+    user_id: str
+    id: str
+    status: str
+    items: list[OrderItemType]
+    price: float
+
+    @classmethod
+    async def parse_type(cls, order: Order, info: Info) -> Self:
+        db = info.context["db"]
+        result = await db.execute(
+            select(OrderItem).where(OrderItem.order_id == order.id),
+        )
+        items = result.scalar().all()
+        return OrderType(
+            user_id=str(order.user_id),
+            id=str(order.id),
+            status=order.status,
+            price=order.price,
+            items=[OrderItemType.parse_type(item) for item in items],
         )

@@ -15,8 +15,8 @@ from app.services.session_service import SessionError, auth_required
 @strawberry.type
 class Mutation:
     @strawberry.mutation
-    async def register(self, info: Info, username: str, password: str, handler: str | None = None) -> AuthError | AuthSuccess:
-        return await AuthService.register(info.context["db"], username, password, handler)
+    async def register(self, info: Info, username: str, password: str) -> AuthError | AuthSuccess:
+        return await AuthService.register(info.context["db"], username, password)
 
 
     @strawberry.mutation
@@ -31,7 +31,7 @@ class Mutation:
         if isinstance(user, SessionError):
             return user
 
-        return await AuthService.logout(info.context["db"], user, info.context["cookies"])
+        return await AuthService.logout(info.context["db"], info.context["cookies"], info)
 
     @strawberry.mutation
     async def add_to_cart(self, product_id: str, quantity: int, info: Info) -> SessionError | CartMessage | CartError:

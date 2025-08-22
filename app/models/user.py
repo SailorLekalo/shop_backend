@@ -14,7 +14,6 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     is_admin = Column(Boolean, default=False)
-    telegram_handler = Column(String(255),default=None)
 
 
 @strawberry.type
@@ -22,7 +21,6 @@ class UserType:
     id: str
     username: str
     is_admin: bool
-    telegram_handler: str
 
     @classmethod
     def parse_type(cls, user: User) -> Self:
@@ -30,5 +28,4 @@ class UserType:
             id=str(user.id),
             username=user.username,
             is_admin=user.is_admin,
-            telegram_handler=user.telegram_handler,
         )

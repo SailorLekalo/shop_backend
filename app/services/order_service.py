@@ -1,26 +1,15 @@
 import asyncio
-import enum
 import uuid
 
 import strawberry
-from aiogram import Bot
 from sqlalchemy import select
 from strawberry import Info
 
 from app.db.db_session import AsyncSessionLocal
 from app.events import order_queue
 from app.models.cart import CartItem
-from app.models.order import Order, OrderItem, OrderItemType, OrderType
+from app.models.order import Order, OrderItem, OrderItemType, OrderStatusEnum, OrderType
 from app.models.user import User
-
-
-@strawberry.enum
-class OrderStatusEnum(str, enum.Enum):
-    IN_PROCESS = "In process"
-    PAID = "Paid"
-    SHIPPED = "Shipped"
-    DELIVERED = "Delivered"
-    CANCELED = "Canceled"
 
 
 @strawberry.type
@@ -84,7 +73,7 @@ class OrderService:
 
         order = Order(user_id=user.id,
                       id=uuid.uuid4(),
-                      status="In process",
+                      status=OrderStatusEnum.IN_PROCESS,
                       price=0)
 
         for item in items:
@@ -125,21 +114,6 @@ class OrderService:
                                         new_status)
 
         return OrderResult(result=[OrderType.parse_type(order)])
-
-    @classmethod
-    async def _notificate_telegram(cls,
-                                   order_id: str,
-                                   user_id: str,
-                                   new_status: str,
-                                   bot: Bot,
-                                   handler: str) -> None:
-        message = (
-            f"📦 Новый статус заказа\n\n"
-            f"🆔 Order ID: <code>{order_id}</code>\n"
-            f"👤 User ID: <code>{user_id}</code>\n"
-            f"📌 Status: <b>{new_status}</b>"
-        )
-        await bot.send_message(handler, message)
 
     @classmethod
     async def _notificate_websocket(cls,

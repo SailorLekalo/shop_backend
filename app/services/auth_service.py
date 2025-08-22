@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import bcrypt
 import strawberry
 from sqlalchemy import delete, select
+from strawberry import Info
 
 from app.db.db_session import AsyncSessionLocal
 from app.models.sessions import Session
@@ -26,8 +27,7 @@ class AuthService:
     async def register(cls,
                        db: AsyncSessionLocal,
                        username: str,
-                       password: str,
-                       handler: str | None) -> AuthError | AuthSuccess:  # регистрация
+                       password: str) -> AuthError | AuthSuccess:  # регистрация
 
         check = await db.execute(select(User).where(User.username == username))
         if check.scalars().first() is not None:
@@ -39,7 +39,6 @@ class AuthService:
                 password.encode("utf-8"),
                 bcrypt.gensalt(),
             ).decode("utf-8"),
-            telegram_handler=handler,
         )
 
         db.add(new_user)
@@ -90,11 +89,15 @@ class AuthService:
     @classmethod
     async def logout(cls,
                      db: AsyncSessionLocal,
-                     user: User,
-                     cookies: list) -> AuthSuccess:
-        await db.execute(delete(Session).where(Session.user_id == user.id))
+                     cookies: list,
+                     info: Info) -> AuthSuccess:
+        request = info.context["request"]
+        sessionid = request.cookies.get("session")
+        await db.execute(delete(Session).where(Session.ses_id == sessionid))
         await db.commit()
+
         cookies.append(
             {"key": "session", "value": "", "max_age": 0, "path": "/"},
         )
+
         return AuthSuccess(message="Вы разлогинились")
