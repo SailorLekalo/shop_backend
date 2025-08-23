@@ -70,7 +70,8 @@ class OrderType:
         result = await db.execute(
             select(OrderItem).where(OrderItem.order_id == order.id),
         )
-        items = result.scalar().all()
+        result = result.scalar()
+        items = [result] if isinstance(result, OrderItem) else result.all()
         return OrderType(
             user_id=str(order.user_id),
             id=str(order.id),

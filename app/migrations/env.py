@@ -15,6 +15,12 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from app.models.base import Base
+from app.models.user import User
+from app.models.product import Product
+from app.models.order import Order, OrderItem
+from app.models.cart import CartItem
+from app.models.sessions import Session
+from app.models.notifications import Notifications
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

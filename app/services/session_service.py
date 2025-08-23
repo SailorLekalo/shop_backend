@@ -27,9 +27,10 @@ class SessionService:
 
         request = info.context["request"]
         sessionid = request.cookies.get("session")
+
+
         check = await db.execute(select(Session).where(Session.ses_id == sessionid))
         check = check.scalars().first()
-
         if check is None:
             return SessionError(message="Сессия не существует")
 

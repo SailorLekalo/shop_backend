@@ -36,11 +36,13 @@ class OrderService:
     order_queue: asyncio.Queue = asyncio.Queue()
 
     @classmethod
-    async def get_orders(cls, db: AsyncSessionLocal, user: User) -> OrderResult:
+    async def get_orders(cls, db: AsyncSessionLocal, user: User, info: Info) -> OrderResult:
+
         result = await db.execute(select(Order).where(Order.user_id == user.id))
+
         orders = result.scalars().all()
 
-        return OrderResult(result=[OrderType.parse_type(o) for o in orders])
+        return OrderResult(result=[await OrderType.parse_type(o, info=info) for o in orders])
 
     @classmethod
     async def get_order_items(cls,
@@ -111,15 +113,15 @@ class OrderService:
         await db.refresh(order)
 
         await cls._notificate_websocket(order,
-                                        new_status)
+                                        new_status,
+                                        info)
 
-        return OrderResult(result=[OrderType.parse_type(order)])
+        return OrderResult(result=[OrderType.parse_type(order, info)])
 
     @classmethod
     async def _notificate_websocket(cls,
                                     order: Order,
-                                    new_status: str) -> None:
-        await order_queue.put(OrderType(user_id=order.user_id,
-                                        id=str(order.id),
-                                        status=new_status,
-                                        price=order.price))
+                                    new_status: str,
+                                    info: Info) -> None:
+        order.status = new_status
+        await order_queue.put(OrderType.parse_type(order, info))

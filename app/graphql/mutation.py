@@ -31,7 +31,7 @@ class Mutation:
         if isinstance(user, SessionError):
             return user
 
-        return await AuthService.logout(info.context["db"], info.context["cookies"], info)
+        return await AuthService.logout(info.context["db"], info)
 
     @strawberry.mutation
     async def add_to_cart(self, product_id: str, quantity: int, info: Info) -> SessionError | CartMessage | CartError:

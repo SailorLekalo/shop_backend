@@ -17,7 +17,9 @@ from app.services.session_service import SessionError, auth_required
 class Query:
     @strawberry.field
     async def me(self, info: Info) -> UserType | SessionError:
+
         user = await auth_required(info)
+
         if isinstance(user, SessionError):
             return user
 
@@ -33,11 +35,12 @@ class Query:
 
     @strawberry.field
     async def get_orders(self, info: Info) -> SessionError | OrderResult | OrderError:
+
         user = await auth_required(info)
         if isinstance(user, SessionError):
             return user
 
-        return await OrderService.get_orders(info.context["db"], user)
+        return await OrderService.get_orders(info.context["db"], user, info)
 
     @strawberry.field
     async def get_order_items(self, info: Info, order_id: str) -> SessionError | OrderItemResult | OrderError:
