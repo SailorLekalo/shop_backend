@@ -22,7 +22,7 @@ class Mutation:
     @strawberry.mutation
     async def auth(self, username: str, password: str, info: Info) -> AuthError | AuthSuccess:
 
-        return await AuthService.auth(info.context["db"], username, password, info.context["cookies"])
+        return await AuthService.auth(info.context["db"], username, password, info)
 
 
     @strawberry.field

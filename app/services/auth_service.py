@@ -50,7 +50,7 @@ class AuthService:
                    db: AsyncSessionLocal,
                    user_name: str,
                    password: str,
-                   cookies: list,
+                   info: Info,
                    session_expiry_minutes: int = 10) -> AuthError | AuthSuccess:
 
         user = await db.execute(select(User).where(User.username == user_name))
@@ -74,14 +74,13 @@ class AuthService:
         db.add(new_session)
         await db.commit()
 
-        cookies.append(
-            {
-                "key": "session",
-                "value": str(new_session.ses_id),
-                "httponly": True,
-                "max_age": session_expiry_minutes * 60,
-                "path": "/",
-            },
+        info.context["response"].set_cookie(
+            key="session",
+            value=new_session.ses_id,
+            httponly=True,
+            samesite="lax",
+            max_age=session_expiry_minutes * 60,
+            path="/",
         )
 
         return AuthSuccess(message="Вы успешно залогинены")
@@ -89,15 +88,17 @@ class AuthService:
     @classmethod
     async def logout(cls,
                      db: AsyncSessionLocal,
-                     cookies: list,
                      info: Info) -> AuthSuccess:
         request = info.context["request"]
         sessionid = request.cookies.get("session")
         await db.execute(delete(Session).where(Session.ses_id == sessionid))
         await db.commit()
 
-        cookies.append(
-            {"key": "session", "value": "", "max_age": 0, "path": "/"},
+        info.context["response"].set_cookie(
+            key="session",
+            value="",
+            max_age=0,
+            path="/",
         )
 
         return AuthSuccess(message="Вы разлогинились")
