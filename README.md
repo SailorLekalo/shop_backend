@@ -17,8 +17,16 @@ docker compose up -d
 
 ### 3) Сидинг первичных данных в базу
 ```bash
-docker compose exec app poetry run python -m app.db.seed
+docker compose exec app python -m app.db.seed
 ```
+### 4) Запуск автотестов
+```bash
+docker compose run --rm app poetry install --with dev
+```
+```bash
+docker compose run app poetry run pytest -v
+```
+
 
 # Документация API
 

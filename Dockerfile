@@ -15,16 +15,13 @@ WORKDIR /app
 
 COPY pyproject.toml poetry.lock ./
 RUN poetry config virtualenvs.create false && \
-    poetry install --without dev --no-interaction --no-ansi
+    poetry install --with dev --no-interaction --no-ansi
 
 
 FROM base AS development
 COPY . .
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
-
-FROM base AS production
-COPY . .
 
 FROM base AS production
 COPY . .
