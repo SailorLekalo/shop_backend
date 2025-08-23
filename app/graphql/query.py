@@ -5,7 +5,6 @@ from app.models.user import UserType
 from app.services.cart_service import CartError, CartResult, CartService
 from app.services.order_service import (
     OrderError,
-    OrderItemResult,
     OrderResult,
     OrderService,
 )
@@ -43,12 +42,12 @@ class Query:
         return await OrderService.get_orders(info.context["db"], user, info)
 
     @strawberry.field
-    async def get_order_items(self, info: Info, order_id: str) -> SessionError | OrderItemResult | OrderError:
+    async def get_single_order(self, info: Info, order_id: str) -> SessionError | OrderResult | OrderError:
         user = await auth_required(info)
         if isinstance(user, SessionError):
             return user
 
-        return await OrderService.get_order_items(info.context["db"], user, order_id)
+        return await OrderService.get_single_order(info.context["db"], user, order_id, info)
 
     @strawberry.field
     async def products(self, info: Info) -> ProductResult:

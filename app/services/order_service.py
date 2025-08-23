@@ -8,7 +8,7 @@ from strawberry import Info
 from app.db.db_session import AsyncSessionLocal
 from app.events import order_queue
 from app.models.cart import CartItem
-from app.models.order import Order, OrderItem, OrderItemType, OrderStatusEnum, OrderType
+from app.models.order import Order, OrderItem, OrderStatusEnum, OrderType
 from app.models.user import User
 
 
@@ -18,18 +18,8 @@ class OrderError:
 
 
 @strawberry.type
-class OrderItemError:
-    message: str
-
-
-@strawberry.type
 class OrderResult:
     result: list[OrderType]
-
-
-@strawberry.type
-class OrderItemResult:
-    result: list[OrderItemType]
 
 
 class OrderService:
@@ -45,10 +35,11 @@ class OrderService:
         return OrderResult(result=[await OrderType.parse_type(o, info=info) for o in orders])
 
     @classmethod
-    async def get_order_items(cls,
-                              db: AsyncSessionLocal,
-                              user: User,
-                              order_id: str) -> OrderItemResult | OrderError:
+    async def get_single_order(cls,
+                               db: AsyncSessionLocal,
+                               user: User,
+                               order_id: str,
+                               info: Info) -> OrderResult | OrderError:
 
         order_check = await db.execute(
             select(Order)
@@ -59,11 +50,8 @@ class OrderService:
         if not order:
             return OrderError(message="Заказ не найден или доступ запрещён")
 
-        result = await db.execute(select(OrderItem).where(OrderItem.order_id == order_id))
-        items = result.scalars().all()
-
-        items_list = [OrderItemType.parse_type(item) for item in items]
-        return OrderItemResult(result=items_list)
+        items_list = OrderType.parse_type(order, info)
+        return OrderResult(result=items_list)
 
     @classmethod
     async def place_order(cls, db: AsyncSessionLocal, user: User) -> OrderResult | OrderError:

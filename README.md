@@ -268,3 +268,23 @@ query GetMyOrders {
   }
 }
 ```
+### Получить один заказ
+```graphql
+query getOrder{
+  getSingleOrder(orderId:"order_id"){
+    __typename
+    ... on SessionError{
+      message
+    }
+    ... on OrderResult{
+      result{
+        price
+        id
+      }
+    }
+    ... on OrderError{
+      message
+    }
+  }
+}
+```
