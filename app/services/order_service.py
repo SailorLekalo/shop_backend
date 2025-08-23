@@ -6,7 +6,7 @@ from sqlalchemy import select
 from strawberry import Info
 
 from app.db.db_session import AsyncSessionLocal
-from app.events import order_queue
+from app.events import broadcast
 from app.models.cart import CartItem
 from app.models.order import Order, OrderItem, OrderStatusEnum, OrderType
 from app.models.user import User
@@ -50,7 +50,7 @@ class OrderService:
         if not order:
             return OrderError(message="Заказ не найден или доступ запрещён")
 
-        items_list = OrderType.parse_type(order, info)
+        items_list = [OrderType.parse_type(order, info)]
         return OrderResult(result=items_list)
 
     @classmethod
@@ -100,16 +100,15 @@ class OrderService:
         await db.commit()
         await db.refresh(order)
 
-        await cls._notificate_websocket(order,
-                                        new_status,
-                                        info)
+        await cls._notificate_websocket(order)
 
         return OrderResult(result=[OrderType.parse_type(order, info)])
 
     @classmethod
     async def _notificate_websocket(cls,
                                     order: Order,
-                                    new_status: str,
-                                    info: Info) -> None:
-        order.status = new_status
-        await order_queue.put(OrderType.parse_type(order, info))
+                                    ) -> None:
+        await broadcast.publish(
+            channel=f"orders:{order.user_id}",
+            message=order,
+        )

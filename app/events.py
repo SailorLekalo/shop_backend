@@ -1,3 +1,3 @@
-import asyncio
+from broadcaster import Broadcast
 
-order_queue: asyncio.Queue = asyncio.Queue()
+broadcast = Broadcast("memory://")
