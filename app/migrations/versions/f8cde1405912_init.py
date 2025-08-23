@@ -1,8 +1,8 @@
-"""Init
+"""init
 
-Revision ID: ca2e298622c6
-Revises: 
-Create Date: 2025-08-19 01:41:50.325035
+Revision ID: f8cde1405912
+Revises:
+Create Date: 2025-08-23 16:00:37.114451
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'ca2e298622c6'
+revision: str = 'f8cde1405912'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -26,6 +26,7 @@ def upgrade() -> None:
     sa.Column('name', sa.String(length=50), nullable=True),
     sa.Column('description', sa.String(length=10000), nullable=True),
     sa.Column('price', sa.Numeric(), nullable=True),
+    sa.Column('amount', sa.Numeric(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('users',
@@ -40,6 +41,7 @@ def upgrade() -> None:
     sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('product_id', sa.UUID(), nullable=False),
     sa.Column('quantity', sa.Integer(), nullable=True),
+    sa.Column('price', sa.Numeric(), nullable=True),
     sa.ForeignKeyConstraint(['product_id'], ['products.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('user_id', 'product_id')
@@ -47,7 +49,8 @@ def upgrade() -> None:
     op.create_table('orders',
     sa.Column('user_id', sa.UUID(), nullable=True),
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('status', sa.String(length=30), nullable=True),
+    sa.Column('status', sa.Enum('IN_PROCESS', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELED', name='status'), nullable=True),
+    sa.Column('price', sa.Numeric(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
