@@ -6,7 +6,7 @@
   - `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_HOST`
   - `DATABASE_URL=postgresql+asyncpg://<user>:<pass>@<host>:5432/<db>`
   - `SESSION_EXPIRE_MINUTES` (например, `1440`)
-  - `TELEGRAM_TOKEN` (опционально, если используете Telegram-уведомления)
+
 
 > ⚠️ Не храните реальные секреты в репозитории. Добавьте `app/settings/.env` в `.gitignore`.
 
@@ -66,7 +66,6 @@ query Me {
       id
       username
       isAdmin
-      telegramHandler
     }
   }
 }
