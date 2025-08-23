@@ -1,8 +1,8 @@
 """init
 
-Revision ID: f8cde1405912
+Revision ID: c8dcfcbe8d72
 Revises:
-Create Date: 2025-08-23 16:00:37.114451
+Create Date: 2025-08-23 19:00:13.479872
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'f8cde1405912'
+revision: str = 'c8dcfcbe8d72'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -49,7 +49,7 @@ def upgrade() -> None:
     op.create_table('orders',
     sa.Column('user_id', sa.UUID(), nullable=True),
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('status', sa.Enum('IN_PROCESS', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELED', name='status'), nullable=True),
+    sa.Column('status', sa.Enum('IN_PROCESS', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELED', name='order_status'), nullable=True),
     sa.Column('price', sa.Numeric(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
@@ -65,7 +65,7 @@ def upgrade() -> None:
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('user_id', sa.UUID(), nullable=True),
     sa.Column('order_id', sa.UUID(), nullable=True),
-    sa.Column('channel', sa.String(length=50), nullable=True),
+    sa.Column('status', sa.Enum('UNREAD', 'READ', name='notif_status'), nullable=True),
     sa.ForeignKeyConstraint(['order_id'], ['orders.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')

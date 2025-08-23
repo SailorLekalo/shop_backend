@@ -6,10 +6,10 @@ from sqlalchemy import select
 from strawberry import Info
 
 from app.db.db_session import AsyncSessionLocal
-from app.events import broadcast
 from app.models.cart import CartItem
 from app.models.order import Order, OrderItem, OrderStatusEnum, OrderType
 from app.models.user import User
+from app.services.notification_service import NotificationService
 
 
 @strawberry.type
@@ -88,6 +88,7 @@ class OrderService:
                             new_status: OrderStatusEnum,
                             ) -> OrderError | OrderResult:
         db = info.context["db"]
+
         result = await db.execute(
             select(Order).where(Order.id == uuid.UUID(order_id)),
         )
@@ -100,15 +101,6 @@ class OrderService:
         await db.commit()
         await db.refresh(order)
 
-        await cls._notificate_websocket(order)
+        await NotificationService.notificate_websocket(order, db)
 
         return OrderResult(result=[OrderType.parse_type(order, info)])
-
-    @classmethod
-    async def _notificate_websocket(cls,
-                                    order: Order,
-                                    ) -> None:
-        await broadcast.publish(
-            channel=f"orders:{order.user_id}",
-            message=order,
-        )

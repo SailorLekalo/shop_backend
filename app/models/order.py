@@ -23,7 +23,7 @@ class Order(Base):
 
     user_id = Column(ForeignKey("users.id", ondelete="CASCADE"))
     id = Column(UUID, primary_key=True, default=uuid.uuid4)
-    status = Column(Enum(OrderStatusEnum, name="status"), default=OrderStatusEnum.IN_PROCESS)
+    status = Column(Enum(OrderStatusEnum, name="order_status"), default=OrderStatusEnum.IN_PROCESS)
     price = Column(Numeric)
 
 

@@ -6,7 +6,7 @@ import pytest_asyncio
 @pytest_asyncio.fixture
 async def client():
     """HTTPX клиент, который ходит в уже запущенный uvicorn"""
-    async with httpx.AsyncClient(base_url="http://app:8000") as ac:
+    async with httpx.AsyncClient(base_url="http://localhost:8000") as ac:
         yield ac
 
 

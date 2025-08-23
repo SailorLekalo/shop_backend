@@ -3,6 +3,10 @@ from strawberry.types import Info
 
 from app.models.user import UserType
 from app.services.cart_service import CartError, CartResult, CartService
+from app.services.notification_service import (
+    NotificationReadResult,
+    NotificationService,
+)
 from app.services.order_service import (
     OrderError,
     OrderResult,
@@ -56,11 +60,12 @@ class Query:
     @strawberry.field
     async def get_product(self, info: Info, pid: str) -> ProductResult | ProductError:
         return await ProductService.single_product(info.context["db"], pid)
+
     @strawberry.field
-    async def get_notifications(self, info: Info) -> SessionError | ProductResult | ProductError:
+    async def get_notifications(self, info: Info) -> SessionError | NotificationReadResult:
         user = await auth_required(info)
 
         if isinstance(user, SessionError):
             return user
 
-        return SessionError()
+        return await NotificationService.get_notififcations(user, info.context["db"])

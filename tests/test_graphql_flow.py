@@ -159,6 +159,7 @@ async def test_change_order_status(client, state):
       }}
     }}
     """
+
     data, _ = await graphql_request(client, query, state["cookies"])
     assert data["data"]["changeOrderStatus"]["__typename"] == "OrderResult"
     assert data["data"]["changeOrderStatus"]["result"][0]["status"] == "Paid"
@@ -195,6 +196,73 @@ async def test_get_orders(client, state):
         assert all("id" in r for r in results)
 
 
+
+
+
+@pytest.mark.asyncio
+async def test_get_notifications(client, state):
+    query = """
+    query {
+      getNotifications {
+        __typename
+        ... on NotificationReadResult {
+          result{
+            id
+            status
+          }
+        }
+        ... on SessionError {
+          message
+        }
+      }
+    }
+    """
+    data, _ = await graphql_request(client, query, state["cookies"])
+
+    notifications = data["data"]["getNotifications"]['result']
+    assert isinstance(notifications, list)
+    assert len(notifications) > 0
+
+    state["notif_id"] = notifications[0]["id"]
+
+
+@pytest.mark.asyncio
+async def test_read_notifications(client, state):
+    query = f"""
+    mutation {{
+      readNotifications(notifIds: ["{state.get('notif_id', '')}"]) {{
+        __typename
+        ... on NotificationResult {{ message }}
+        ... on SessionError {{ message }}
+      }}
+    }}
+    """
+    data, _ = await graphql_request(client, query, state["cookies"])
+
+    message = data["data"]["readNotifications"]["message"]
+    assert message == "Notifications read"
+
+    query = """
+    query {
+        getNotifications {
+            __typename
+            ... on NotificationReadResult {
+                result{
+                    id
+                    userId
+                    orderId
+                    status
+              }
+            }
+            ... on SessionError {
+              message
+            }
+        }
+    }
+    """
+    data, _ = await graphql_request(client, query, state["cookies"])
+    statuses = {n["id"]: n["status"] for n in data["data"]["getNotifications"]["result"]}
+    assert statuses[state["notif_id"]] == "READ"
 
 @pytest.mark.asyncio
 async def test_logout(client, state):

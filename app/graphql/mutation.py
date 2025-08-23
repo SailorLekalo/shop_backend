@@ -3,6 +3,7 @@ from strawberry.types import Info
 
 from app.services.auth_service import AuthError, AuthService, AuthSuccess
 from app.services.cart_service import CartError, CartMessage, CartService
+from app.services.notification_service import NotificationResult, NotificationService
 from app.services.order_service import (
     OrderError,
     OrderResult,
@@ -18,12 +19,10 @@ class Mutation:
     async def register(self, info: Info, username: str, password: str) -> AuthError | AuthSuccess:
         return await AuthService.register(info.context["db"], username, password)
 
-
     @strawberry.mutation
     async def auth(self, username: str, password: str, info: Info) -> AuthError | AuthSuccess:
 
         return await AuthService.auth(info.context["db"], username, password, info)
-
 
     @strawberry.field
     async def logout(self, info: Info) -> SessionError | AuthSuccess:
@@ -59,6 +58,7 @@ class Mutation:
 
     @strawberry.mutation
     async def change_order_status(self, info: Info, order_id: str, new_status: OrderStatusEnum) -> SessionError | OrderResult | OrderError:
+
         user = await auth_required(info)
         if isinstance(user, SessionError):
             return user
@@ -66,3 +66,14 @@ class Mutation:
             return SessionError(message="Для этой операции требуется статус администратора")
 
         return await OrderService.change_status(info, order_id, new_status)
+
+    @strawberry.mutation
+    async def read_notifications(self,
+                                 info: Info,
+                                 notif_ids: list[str],
+                                 ) -> NotificationResult | SessionError:
+        user = await auth_required(info)
+        if isinstance(user, SessionError):
+            return user
+
+        return await NotificationService.read_notifications(user, info, notif_ids)
