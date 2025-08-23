@@ -56,3 +56,11 @@ class Query:
     @strawberry.field
     async def get_product(self, info: Info, pid: str) -> ProductResult | ProductError:
         return await ProductService.single_product(info.context["db"], pid)
+    @strawberry.field
+    async def get_notifications(self, info: Info) -> SessionError | ProductResult | ProductError:
+        user = await auth_required(info)
+
+        if isinstance(user, SessionError):
+            return user
+
+        return SessionError()
