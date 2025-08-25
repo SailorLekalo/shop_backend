@@ -41,7 +41,20 @@ docker compose run app poetry run pytest -v
 ---
 
 ## 🔐 Аутентификация
-
+### Регистрация
+```graphql
+mutation Register {
+  register(username:"your_name", password:"your_password"){
+    __typename
+    ... on AuthError{
+      message
+    }
+    ... on AuthSuccess{
+      message
+    }
+  }
+}
+```
 ### Авторизация
 ```graphql
 mutation Auth {
@@ -288,11 +301,22 @@ query getOrder{
       result{
         price
         id
+        status
       }
     }
     ... on OrderError{
       message
     }
+  }
+}
+```
+### Подписаться на изменения в заказах юзера
+```graphql
+subscription{
+  orderStatusChanged{
+    id
+    userId
+    status
   }
 }
 ```
