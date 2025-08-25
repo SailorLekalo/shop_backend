@@ -9,16 +9,13 @@ from strawberry import Info
 from app.db.db_session import AsyncSessionLocal
 from app.models.sessions import Session
 from app.models.user import User
+from graphql import GraphQLError
 
 
 @strawberry.type
 class AuthSuccess:
     message: str
 
-
-@strawberry.type
-class AuthError:
-    message: str
 
 
 class AuthService:
@@ -27,11 +24,12 @@ class AuthService:
     async def register(cls,
                        db: AsyncSessionLocal,
                        username: str,
-                       password: str) -> AuthError | AuthSuccess:  # регистрация
+                       password: str) ->  AuthSuccess:  # регистрация
 
         check = await db.execute(select(User).where(User.username == username))
+
         if check.scalars().first() is not None:
-            return AuthError(message="User already exists")
+            raise GraphQLError(message="User already exists")
 
         new_user = User(
             username=username,
@@ -51,19 +49,19 @@ class AuthService:
                    user_name: str,
                    password: str,
                    info: Info,
-                   session_expiry_minutes: int = 10) -> AuthError | AuthSuccess:
+                   session_expiry_minutes: int = 10) -> AuthSuccess:
 
         user = await db.execute(select(User).where(User.username == user_name))
         user = user.scalars().first()
 
         if user is None:
-            return AuthError(message="User not found")
+            raise GraphQLError(message="User not found")
 
         if not bcrypt.checkpw(
                 password.encode("utf-8"),
                 user.password_hash.encode("utf-8"),
         ):
-            return AuthError(message="Invalid password")
+            raise GraphQLError(message="Invalid password")
 
         new_session = Session(
             ses_id=uuid.uuid4(),

@@ -6,11 +6,7 @@ from app.db.db_session import AsyncSessionLocal
 from app.models.cart import CartItem, CartItemType
 from app.models.product import Product
 from app.models.user import User
-
-
-@strawberry.type
-class CartError:
-    message: str
+from graphql import GraphQLError
 
 
 @strawberry.type
@@ -26,27 +22,35 @@ class CartMessage:
 class CartService:
 
     @classmethod
-    async def get_cart(cls, db: AsyncSessionLocal, user: User) -> CartResult | CartError:
-        items = await db.execute(select(CartItem).where(CartItem.user_id == user.id))
-        items = items.scalars().all()
-        items_list = [CartItemType.parse_type(item) for item in items]
+    async def get_cart(cls, db: AsyncSessionLocal, user: User) -> CartResult :
+        result = await db.execute(
+            select(CartItem, Product)
+            .join(Product, Product.id == CartItem.product_id)
+            .where(CartItem.user_id == user.id),
+        )
+        rows = result.all()
+
+        items_list = [
+            CartItemType.parse_type(cart_item, product)
+            for cart_item, product in rows
+        ]
 
         return CartResult(result=items_list)
 
     @classmethod
-    async def add_to_cart(cls, db: AsyncSessionLocal, user: User, pid: str, qnt: int) -> CartMessage | CartError:
+    async def add_to_cart(cls, db: AsyncSessionLocal, user: User, pid: str, qnt: int) -> CartMessage :
 
         check = await db.execute(select(Product).where(Product.id == pid))
         check = check.scalars().first()
         if check is None:
-            return CartError(message="Продукт не существует")
+            raise GraphQLError(message="Продукт не существует")
 
         item = await db.execute(select(CartItem).where(CartItem.product_id == pid, CartItem.user_id == user.id))
         item = item.scalars().first()
 
         if item is None:
             if check.amount < qnt:
-                return CartError(message="На складе недостаточно товара")
+                raise GraphQLError(message="На складе недостаточно товара")
             new_cart_item = CartItem(user_id=user.id,
                                      product_id=pid,
                                      quantity=qnt,
@@ -56,23 +60,23 @@ class CartService:
             return CartMessage(message="Товар добавлен в корзину")
 
         if check.amount < item.quantity + qnt:
-            return CartError(message="На складе недостаточно товара")
+            raise GraphQLError(message="На складе недостаточно товара")
 
         item.quantity += qnt
         await db.commit()
         return CartMessage(message="Товар добавлен в корзину")
 
     @classmethod
-    async def remove_from_cart(cls, db: AsyncSessionLocal, user: User, pid: str, qnt: int) -> CartMessage | CartError:
+    async def remove_from_cart(cls, db: AsyncSessionLocal, user: User, pid: str, qnt: int) -> CartMessage:
 
         check_product = await db.execute(select(Product).where(Product.id == pid))
         if check_product.scalars().first() is None:
-            return CartError(message="Продукт не существует")
+            raise GraphQLError(message="Продукт не существует")
 
         item = await db.execute(select(CartItem).where(CartItem.product_id == pid, CartItem.user_id == user.id))
         item = item.scalars().first()
         if item is None:
-            return CartError(message="Продукта в корзине нет")
+            raise GraphQLError(message="Продукта в корзине нет")
         if item.quantity > qnt:
             item.quantity -= qnt
             await db.commit()

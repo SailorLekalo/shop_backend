@@ -6,6 +6,7 @@ authors = ["SailorLekalo <shamshev-andrei@yandex.ru>"]
 readme = "README.md"
 packages = [{ include = "app" }]
 
+
 [tool.poetry.dependencies]
 python = ">=3.10"
 fastapi = ">=0.104.1"
@@ -40,6 +41,7 @@ build-backend = "poetry.core.masonry.api"
 start = "uvicorn app.main:app --host 0.0.0.0 --port 8000"
 migrate = "alembic upgrade head"
 makemigrations = "alembic revision --autogenerate -m"
+
 
 [tool.alembic]
 script_location = "app/migrations"

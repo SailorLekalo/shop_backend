@@ -3,16 +3,13 @@ from sqlalchemy import select
 
 from app.db.db_session import AsyncSessionLocal
 from app.models.product import Product, ProductType
+from graphql import GraphQLError
 
 
 @strawberry.type
 class ProductResult:
     result: list[ProductType]
 
-
-@strawberry.type
-class ProductError:
-    message: str
 
 
 class ProductService:
@@ -25,9 +22,9 @@ class ProductService:
         return ProductResult(result=to_return)
 
     @classmethod
-    async def single_product(cls, db: AsyncSessionLocal, pid: str) -> ProductResult | ProductError:
+    async def single_product(cls, db: AsyncSessionLocal, pid: str) -> ProductResult:
         result = await db.execute(select(Product).where(Product.id == pid))
         product = result.scalars().first()
         if product is None:
-            return ProductError(message="Такого продукта не существует")
+            raise GraphQLError(message="Такого продукта не существует")
         return ProductResult(result=[ProductType.parse_type(product)])

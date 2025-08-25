@@ -4,10 +4,13 @@ from typing import Awaitable
 from fastapi import FastAPI, Request, Response
 from starlette.websockets import WebSocket
 from strawberry.fastapi import GraphQLRouter
+from strawberry.http import GraphQLHTTPResponse
+from strawberry.types import ExecutionResult
 
 from app.db.db_session import AsyncSessionLocal
 from app.events import broadcast
 from app.graphql.schema import schema
+from graphql import GraphQLError
 
 app = FastAPI()
 
@@ -20,7 +23,6 @@ async def db_session_middleware(request: Request,
                                 ) -> Response:
     async with AsyncSessionLocal() as session:
         request.state.db = session
-
         return await call_next(request)
 
 
@@ -42,9 +44,22 @@ async def get_context(request: Request = None, websocket: WebSocket = None) -> d
             }
     return {}
 
+class CustomGraphQLRouter(GraphQLRouter):
+    async def process_result(
+        self, request: Request, result: ExecutionResult, # noqa: ARG002
+    ) -> GraphQLHTTPResponse:
+        data: GraphQLHTTPResponse = {"data": result.data}
 
-graphql_app = GraphQLRouter(schema, context_getter=get_context)
+        if result.errors is not None and all(isinstance(err.original_error, GraphQLError) for err in result.errors):
+            data["errors"] = [err.formatted for err in result.errors]
+            return data
+        if result.errors is not None:
+            return "Some strange error occured"
+        return data
+
+graphql_app = CustomGraphQLRouter(schema, context_getter=get_context)
 app.include_router(graphql_app, prefix="/graphql")
+
 
 
 @app.on_event("startup")

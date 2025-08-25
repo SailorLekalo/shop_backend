@@ -15,7 +15,6 @@ services:
   app:
     build:
       context: .
-      target: production
     container_name: isp_app
     restart: always
     depends_on:

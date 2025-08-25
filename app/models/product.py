@@ -24,11 +24,14 @@ class ProductType:
     description: str
     price: float
     amount: int
+    quantity: int | None = None
 
     @classmethod
-    def parse_type(cls, product: Product) -> Self:
+    def parse_type(cls, product: Product, quantity: int | None = None) -> Self:
         return ProductType(id=str(product.id),
                            name=product.name,
                            description=product.description,
                            price=product.price,
-                           amount=product.amount)
+                           amount=product.amount,
+                           quantity=quantity,
+                           )

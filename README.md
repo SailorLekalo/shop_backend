@@ -2,18 +2,17 @@
 
 ### 1) Предусловия
 - Docker и Docker Compose установлены.
-- Создайте файл окружения `app/settings/.env` (можно взять за основу `.env.example`) и заполните переменные:
-  - `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_HOST`
-  - `DATABASE_URL=postgresql+asyncpg://<user>:<pass>@<host>:5432/<db>`
-  - `SESSION_EXPIRE_MINUTES` (например, `1440`)
-
-
-> ⚠️ Не храните реальные секреты в репозитории. Добавьте `app/settings/.env` в `.gitignore`.
+- Создайте файл окружения `app/settings/.env` (можно взять за основу `.env.example`)
 
 ### 2) Запуск инфраструктуры
 ```bash
-docker compose up -d
+docker compose up --build
 ```
+для dev версии
+```bash
+docker compose -f docker-compose.yml up --build -d
+```
+для prod версии
 
 ### 3) Сидинг первичных данных в базу
 ```bash
@@ -46,9 +45,6 @@ docker compose run app poetry run pytest -v
 mutation Register {
   register(username:"your_name", password:"your_password"){
     __typename
-    ... on AuthError{
-      message
-    }
     ... on AuthSuccess{
       message
     }
@@ -61,9 +57,6 @@ mutation Auth {
   auth(username: "Yuki Nagato", password: "Snowbeauty") {
     __typename
     ... on AuthSuccess {
-      message
-    }
-    ... on AuthError {
       message
     }
   }
@@ -80,9 +73,6 @@ mutation Auth {
 query Me {
   me {
     __typename
-    ... on SessionError {
-      message
-    }
     ... on UserType {
       id
       username
@@ -101,9 +91,6 @@ query Me {
 mutation Logout {
   logout {
     __typename
-    ... on SessionError {
-      message
-    }
     ... on AuthSuccess {
       message
     }
@@ -135,9 +122,6 @@ query GetProducts {
 query SingleProduct {
   getProduct(pid: "product_id") {
     __typename
-    ... on ProductError {
-      message
-    }
     ... on ProductResult {
       result {
         id
@@ -160,12 +144,6 @@ query SingleProduct {
 query GetCart {
   getCart {
     __typename
-    ... on SessionError {
-      message
-    }
-    ... on CartError {
-      message
-    }
     ... on CartResult {
       result {
         userId
@@ -183,12 +161,6 @@ query GetCart {
 mutation AddCart {
   addToCart(productId: "product_id", quantity: 5) {
     __typename
-    ... on SessionError {
-      message
-    }
-    ... on CartError {
-      message
-    }
     ... on CartMessage {
       message
     }
@@ -201,12 +173,6 @@ mutation AddCart {
 mutation RemoveCart {
   removeFromCart(productId: "product_id", quantity: 1) {
     __typename
-    ... on SessionError {
-      message
-    }
-    ... on CartError {
-      message
-    }
     ... on CartMessage {
       message
     }
@@ -223,9 +189,6 @@ mutation RemoveCart {
 mutation PlaceOrder {
   placeOrder {
     __typename
-    ... on SessionError {
-      message
-    }
     ... on OrderResult {
       result {
         userId
@@ -233,9 +196,6 @@ mutation PlaceOrder {
         status
         price
       }
-    }
-    ... on OrderError {
-      message
     }
   }
 }
@@ -251,12 +211,6 @@ mutation PlaceOrder {
 mutation ChangeOrderStatus {
   changeOrderStatus(orderId: "order_id", newStatus: "новый статус") {
     __typename
-    ... on SessionError {
-      message
-    }
-    ... on OrderError {
-      message
-    }
     ... on OrderResult {
       result {
         id
@@ -279,13 +233,6 @@ query GetMyOrders {
         price
         }
       }
-
-    ... on OrderError {
-      message
-    }
-    ... on SessionError {
-      message
-    }
   }
 }
 ```
@@ -294,18 +241,12 @@ query GetMyOrders {
 query getOrder{
   getSingleOrder(orderId:"order_id"){
     __typename
-    ... on SessionError{
-      message
-    }
     ... on OrderResult{
       result{
         price
         id
         status
       }
-    }
-    ... on OrderError{
-      message
     }
   }
 }

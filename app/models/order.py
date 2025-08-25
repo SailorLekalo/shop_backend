@@ -7,6 +7,7 @@ from strawberry import Info
 from typing_extensions import Self
 
 from app.models.base import Base
+from app.models.product import Product, ProductType
 
 
 @strawberry.enum
@@ -38,44 +39,32 @@ class OrderItem(Base):
 
 
 @strawberry.type
-class OrderItemType:
-    self_id: str
-    order_id: str
-    product_id: str
-    quantity: float
-    price: float
-
-    @classmethod
-    def parse_type(cls, order_item: OrderItem) -> Self:
-        return OrderItemType(
-            self_id=str(order_item.self_id),
-            order_id=str(order_item.order_id),
-            product_id=str(order_item.product_id),
-            quantity=float(order_item.quantity),
-            price=float(order_item.price),
-        )
-
-
-@strawberry.type
 class OrderType:
     user_id: str
     id: str
     status: str
-    items: list[OrderItemType]
     price: float
 
-    @classmethod
-    async def parse_type(cls, order: Order, info: Info) -> Self:
+    @strawberry.field
+    async def products(self, info: Info) -> list[ProductType]:
         db = info.context["db"]
+
         result = await db.execute(
-            select(OrderItem).where(OrderItem.order_id == order.id),
+            select(OrderItem, Product)
+            .join(Product, Product.id == OrderItem.product_id)
+            .where(OrderItem.order_id == self.id),
         )
-        result = result.scalar()
-        items = [result] if isinstance(result, OrderItem) else result.all()
+        rows = result.all()
+
+        return [
+            ProductType.parse_type(prod, quantity=item.quantity)
+            for item, prod in rows
+        ]
+    @classmethod
+    async def parse_type(cls, order: Order) -> Self:
         return OrderType(
             user_id=str(order.user_id),
             id=str(order.id),
-            status=order.status,
-            price=order.price,
-            items=[OrderItemType.parse_type(item) for item in items],
+            status=order.status.value,
+            price=float(order.price),
         )

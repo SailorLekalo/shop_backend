@@ -10,11 +10,7 @@ from app.models.cart import CartItem
 from app.models.order import Order, OrderItem, OrderStatusEnum, OrderType
 from app.models.user import User
 from app.services.notification_service import NotificationService
-
-
-@strawberry.type
-class OrderError:
-    message: str
+from graphql import GraphQLError
 
 
 @strawberry.type
@@ -38,8 +34,7 @@ class OrderService:
     async def get_single_order(cls,
                                db: AsyncSessionLocal,
                                user: User,
-                               order_id: str,
-                               info: Info) -> OrderResult | OrderError:
+                               order_id: str) -> OrderResult :
 
         order_check = await db.execute(
             select(Order)
@@ -48,18 +43,18 @@ class OrderService:
         )
         order = order_check.scalars().first()
         if not order:
-            return OrderError(message="Заказ не найден или доступ запрещён")
+            raise GraphQLError(message="Заказ не найден или доступ запрещён")
 
-        items_list = [OrderType.parse_type(order, info)]
+        items_list = [OrderType.parse_type(order)]
         return OrderResult(result=items_list)
 
     @classmethod
-    async def place_order(cls, db: AsyncSessionLocal, user: User) -> OrderResult | OrderError:
+    async def place_order(cls, db: AsyncSessionLocal, user: User) -> OrderResult:
         items = await db.execute(select(CartItem).where(CartItem.user_id == user.id))
         items = items.scalars().all()
 
         if not items:
-            return OrderError(message="Корзина пуста")
+            raise GraphQLError(message="Корзина пуста")
 
         order = Order(user_id=user.id,
                       id=uuid.uuid4(),
@@ -86,7 +81,7 @@ class OrderService:
     async def change_status(cls, info: Info,
                             order_id: str,
                             new_status: OrderStatusEnum,
-                            ) -> OrderError | OrderResult:
+                            ) -> OrderResult:
         db = info.context["db"]
 
         result = await db.execute(
@@ -95,7 +90,7 @@ class OrderService:
         order = result.scalars().first()
 
         if order is None:
-            return OrderError(message="Такого заказа не существует")
+            raise GraphQLError(message="Такого заказа не существует")
 
         order.status = new_status.value
         await db.commit()
