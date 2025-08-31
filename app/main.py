@@ -52,9 +52,8 @@ class CustomGraphQLRouter(GraphQLRouter):
 
         if result.errors is not None and all(isinstance(err.original_error, GraphQLError) for err in result.errors):
             data["errors"] = [err.formatted for err in result.errors]
-            return data
         if result.errors is not None:
-            return "Some strange error occured"
+            data["errors"] = "Some strange error occured"
         return data
 
 graphql_app = CustomGraphQLRouter(schema, context_getter=get_context)
